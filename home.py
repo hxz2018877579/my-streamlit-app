@@ -119,11 +119,11 @@ def deselect_all_towns():
 
 def update_datetime_state():
     """更新格式化后的日期时间字符串到session state"""
-    y = st.session_state.get('sel_year', datetime.datetime.now().year)
-    m = st.session_state.get('sel_month', datetime.datetime.now().month)
-    d = st.session_state.get('sel_day', datetime.datetime.now().day)
-    h = st.session_state.get('sel_hour', datetime.datetime.now().hour)
-    mn = st.session_state.get('sel_minute', datetime.datetime.now().minute)
+    y = st.session_state.get('sel_year', datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).year)
+    m = st.session_state.get('sel_month', datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).month)
+    d = st.session_state.get('sel_day', datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).day)
+    h = st.session_state.get('sel_hour', datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).hour)
+    mn = st.session_state.get('sel_minute', datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).minute)
     
     st.session_state.selected_date = f"{y}年{m:02d}月{d:02d}日"
     st.session_state.selected_time = f"{h:02d}时{mn:02d}分"
@@ -166,7 +166,7 @@ def deselect_all_region_2():
 
 def initialize_session_state(): 
     """初始化所有会话状态变量"""
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
     
     # 基础页面状态
     if 'page' not in st.session_state: 
@@ -763,7 +763,7 @@ def create_main_page():
     
     st.markdown("#### 发布时间选择")
 
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
     
     required_states = [
         'p1_generated_content', 'p1_weather_type', 
@@ -837,10 +837,17 @@ def create_main_page():
     corrected_output_placeholder = st.empty()
 
     if st.button("执行纠错", key="run_correction"):
-        reference = st.session_state.get('p1_last_clean_text', '')
-        if reference and _is_minor_edit(input_text, reference):
-            corrected_result = f"[纠错成功]\n{reference}"
-        else:
+        references = [
+            st.session_state.get('p1_last_clean_text', ''),
+            st.session_state.get('p3_short_sms', ''),
+            st.session_state.get('p3_long_sms', ''),
+        ]
+        corrected_result = None
+        for ref in references:
+            if ref and _is_minor_edit(input_text, ref):
+                corrected_result = f"[纠错成功]\n{ref}"
+                break
+        if corrected_result is None:
             corrected_result = correct_text(input_text)
         corrected_output_placeholder.text_area("纠错结果", corrected_result, height=150)
     else:
@@ -856,7 +863,7 @@ def create_third_page():
     
     # --- 发布时间设置区域 ---
     st.markdown("#### 发布时间设置")
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
     
     col_y, col_m, col_d, col_h, col_mn = st.columns(5)
     
